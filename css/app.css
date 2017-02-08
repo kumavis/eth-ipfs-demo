@@ -9,11 +9,15 @@ body {
 .dragover-popup {
   position: absolute;
   top: 10px; right: 10px; bottom: 10px; left: 10px;
-  background-color: rgba(0, 0, 0, 0.5);
   text-align: center;
   padding-top: 30%;
   display: none;
   pointer-events: none;
+}
+
+.panel {
+  background-color: rgb(6, 40, 60);
+  margin-bottom: 40px;
 }
 
 .wrapper {
@@ -204,7 +208,6 @@ button:focus, input:focus {
 .left, .right {
   width: 48%;
   float: left;
-  background-color: rgba(255, 255, 255, 0.05);
   box-sizing: border-box;
   margin: 1%;
   padding: 10px;
@@ -212,9 +215,8 @@ button:focus, input:focus {
 
 
 
-#files {
+#block-container {
   padding-top: 10px;
-  background-color: rgba(255, 255, 255, 0.05);
   margin: 1%;
 }
 

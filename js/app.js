@@ -17,9 +17,13 @@ const store = new ObsStore({
   peerInfo: {},
   peers: [],
   blocks: {},
+  isRpcSyncing: false,
 })
 
+let currentSyncBlock = '0x780dd'
+
 tracker.on('block', (block) => {
+  currentSyncBlock = block.number
   // log block
   console.log('new block:', block.number)
   // add to ipfs
@@ -69,11 +73,13 @@ createNode((err, node) => {
 const actions = {
   startTracker: () => {
     console.log('start rpc sync...')
-    tracker.start({ fromBlock: '0x780dd' })
+    tracker.start({ fromBlock: currentSyncBlock })
+    store.updateState({ isRpcSyncing: true })
   },
   stopTracker: () => {
     console.log('stop rpc sync...')
     tracker.stop()
+    store.updateState({ isRpcSyncing: false })
   },
 }
 

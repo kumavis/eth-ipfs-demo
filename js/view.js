@@ -26,7 +26,7 @@ function render(state, actions) {
     ]),
     h('div.wrapper', [
       h('div#ipfs.ipfs', [
-        h('div.left', [
+        h('div.left.panel', [
           h('div#details'+ state.peerInfo.addresses ? '' : '.disabled', [
             h('h2', `Your daemon`),
             h('h3', `ID`),
@@ -39,7 +39,7 @@ function render(state, actions) {
             )])
           ])
         ]),
-        h('div.right', [
+        h('div.right.panel', [
           h('div#peers'+ state.peers.length ? '' : '.disabled', [
             h('h2', 'Remote Peers'),
             (
@@ -53,39 +53,56 @@ function render(state, actions) {
           h('div', [
             h('input.connect-peer', {
               'attributes': {
-                'disabled': state.peerInfo.addresses ? undefined: true,
+                'disabled': state.peerInfo.addresses ? undefined : true,
                 'type': 'text',
                 'placeholder': 'Multiaddr',
-                'className': 'connect-peer'
               }
             }),
             `
               `,
             h('button.connect-peer', {
               'attributes': {
-                'disabled': state.peerInfo.addresses ? undefined: true,
-                'className': 'connect-peer'
+                'disabled': state.peerInfo.addresses ? undefined : true,
               }
             }, `Connect to peer`)
           ])
         ]),
         h('div.clear'),
-        h('div#files', [
-          h('button#start', {
+        
+        h('#resolve-container.panel', [
+          h('h2', `Resolve from network`),
+          h('input', {
             'attributes': {
+              'disabled': state.peerInfo.addresses ? undefined : true,
+              'type': 'text',
+              'placeholder': 'CID/path/to/data',
+            }
+          }),
+          h('button', {
+            'attributes': {
+              'disabled': state.peerInfo.addresses ? undefined : true,
               'type': 'button'
             },
-            onClick: actions.startTracker,
+            onclick: actions.resolveIpldPath,
+          }, `Resolve Path`),
+        ]),
+
+        h('#block-container.panel', [
+          h('button#start', {
+            'attributes': {
+              'type': 'button',
+              'disabled': !state.isRpcSyncing ? undefined : true,
+            },
             onclick: actions.startTracker,
           }, `Start RPC Sync`),
           `
             `,
           h('button#stop', {
             'attributes': {
-              'disabled': '',
+              'disabled': state.isRpcSyncing ? undefined : true,
               'type': 'button'
             },
-            onClick: actions.stopTracker,
+            onclick: actions.stopTracker,
           }, `Stop RPC Sync`),
           Object.keys(state.blocks).map((blockNumber) => {
             const block = state.blocks[blockNumber]

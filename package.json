@@ -27,7 +27,7 @@
     "babel-preset-es2017": "^6.22.0",
     "babelify": "^7.3.0",
     "browserify-zlib-next": "^1.0.1",
-    "eth-block-tracker": "^1.0.0",
+    "eth-block-tracker": "^1.0.1",
     "ethjs-provider-http": "^0.1.6",
     "ipfs": "^0.21.8",
     "obs-store": "^2.3.2",
