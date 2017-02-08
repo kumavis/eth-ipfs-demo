@@ -29,7 +29,7 @@
     "browserify-zlib-next": "^1.0.1",
     "eth-block-tracker": "^1.0.1",
     "ethjs-provider-http": "^0.1.6",
-    "ipfs": "^0.21.8",
+    "ipfs": "ipfs/js-ipfs#master",
     "obs-store": "^2.3.2",
     "virtual-dom": "^2.1.1"
   }

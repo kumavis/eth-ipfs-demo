@@ -4,7 +4,12 @@ const Ipfs = require('ipfs')
 module.exports = (callback) => {
   // Create a new repository for IPFS in a random path always
   const repoPath = '/tmp/ipfs' + Math.random()
-  const node = new Ipfs(repoPath)
+  const node = new Ipfs({
+    repo: repoPath,
+    EXPERIMENTAL: {
+      pubsub: true,
+    },
+  })
 
   // Initialize our repository with no extra files
   node.init({ emptyRepo: true }, updateConfig)
