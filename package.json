@@ -1,11 +1,9 @@
 {
-  "name": "transfer-files",
+  "name": "metamask-mesh",
   "version": "1.0.0",
   "scripts": {
-    "check-bundle": "test -f ../../../dist/index.js && npm run copy-bundle || (echo \"js-ipfs dist file not found, go up two dirs and run 'npm run build' first\" && exit 1)",
-    "copy-bundle": "cp ../../../dist/index.js ./js/ipfs.js",
-    "serve": "http-server -c-1 -p 12345",
-    "start": "beefy js/app.js --live --open -- -r browserify-zlib-next:zlib"
+    "start": "beefy js/app.js:bundle.js --live --open -- -r browserify-zlib-next:zlib",
+    "build": "browserify js/app.js -r browserify-zlib-next:zlib -o bundle.js"
   },
   "license": "MIT",
   "browserify": {
