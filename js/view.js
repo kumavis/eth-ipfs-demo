@@ -76,6 +76,7 @@ function render(state, actions) {
               'disabled': state.peerInfo.addresses ? undefined : true,
               'type': 'text',
               'placeholder': 'CID/path/to/data',
+              'value': 'z43AaGEymG8TWXUuZgFVPB1XkvUadjbwv9RtZignh6kWPmkKNFY/number',
             }
           }),
           h('button', {
@@ -83,7 +84,10 @@ function render(state, actions) {
               'disabled': state.peerInfo.addresses ? undefined : true,
               'type': 'button'
             },
-            onclick: actions.resolveIpldPath,
+            onclick: (event) => {
+              const input = document.querySelector('#resolve-container input')
+              actions.resolveIpldPath(input.value)
+            },
           }, `Resolve Path`),
         ]),
 

@@ -5,6 +5,7 @@ const HttpProvider = require('ethjs-provider-http')
 const BlockHeader = require('ethereumjs-block/header')
 const ethUtil = require('ethereumjs-util')
 const cidForHash = require('ipld-eth-block/src/common').cidForHash
+const CID = require('cids')
 const ObsStore = require('obs-store')
 const createNode = require('./create-node')
 const vdom = require('./vdom')
@@ -101,6 +102,8 @@ function registerBlockAsLocal (blockData) {
 // view
 //
 
+// z43AaGEymG8TWXUuZgFVPB1XkvUadjbwv9RtZignh6kWPmkKNFY/number
+
 const actions = {
   startTracker: () => {
     console.log('start rpc sync...')
@@ -112,6 +115,17 @@ const actions = {
     console.log('stop rpc sync...')
     tracker.stop()
     store.updateState({ isRpcSyncing: false })
+  },
+  resolveIpldPath: (pathString) => {
+    const pathParts = pathString.split('/')
+    const cid = new CID(pathParts[0])
+    const path = pathParts.slice(1).join('/')
+    console.log(`ipfs.dag.get(${pathParts[0]}, "${path}")`)
+    ipfs.dag.get(cid, path).then((result) => {
+      console.log(result)
+    }).catch((err) => {
+      console.error(err)
+    })
   },
 }
 
