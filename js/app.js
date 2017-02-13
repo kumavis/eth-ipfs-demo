@@ -10,7 +10,7 @@ const createNode = require('./create-node')
 const vdom = require('./vdom')
 const render = require('./view.js')
 
-const provider = new HttpProvider('https://ropsten.infura.io')
+const provider = new HttpProvider('https://mainnet.infura.io')
 const tracker = new BlockTracker({ provider, pollingInterval: 2e3 })
 
 let ipfs
@@ -105,6 +105,7 @@ const actions = {
   startTracker: () => {
     console.log('start rpc sync...')
     tracker.start()
+    // tracker.start({ fromBlock: '0x2d5068' })
     store.updateState({ isRpcSyncing: true })
   },
   stopTracker: () => {
