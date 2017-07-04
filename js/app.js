@@ -23,8 +23,9 @@ const store = new ObsStore({
   peers: [],
   blocks: [],
   bestBlock: null,
+  pseudoQuery: '/eth/latest/state/0x52bc44d5378309ee2abf1539bf71de1b7d7be3b5/balance',
+  dagQuery: '',
   isRpcSyncing: false,
-  dagQuery: null,
 })
 
 tracker.on('latest', (block) => {
@@ -108,7 +109,7 @@ function registerBlockAsLocal (block) {
   store.updateState({ blocks })
   // check if new block is best block
   if (!bestBlock || (parseInt(block.number) > parseInt(bestBlock.number))) {
-    store.updateState({ bestBlock: block })
+    actions.setBestBlock(block)
   }
 }
 
@@ -130,9 +131,17 @@ const actions = {
     tracker.stop()
     store.updateState({ isRpcSyncing: false })
   },
-  pseudoQueryDidUpdate: (pseudoQuery) => {
+  setPseudoQuery: (pseudoQuery) => {
+    store.updateState({ pseudoQuery })
+    actions.updateDagQuery()
+  },
+  setBestBlock: (bestBlock) => {
+    store.updateState({ bestBlock })
+    actions.updateDagQuery()
+  },
+  updateDagQuery: () => {
+    const { pseudoQuery, bestBlock } = store.getState()
     const parts = pseudoQuery.split('/')
-    const bestBlock = store.getState().bestBlock
     if (!bestBlock) return
     // build ipfs dag query string
     let dagQueryParts = []
