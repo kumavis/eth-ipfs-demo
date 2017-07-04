@@ -32,22 +32,38 @@ function render(state, actions) {
 
           // data lookups
           h('#resolve-container.panel', [
-            h('h2', `Resolve from network`),
-            h('input', {
+            // h('h2', `Resolve from network`),
+
+            h('div', 'best block:'),
+            state.bestBlock ? renderBlock(state.bestBlock) : h('div', '(none)'),
+
+            // pseudo path
+            h('input#eth-pseudo-query', {
               'attributes': {
                 'disabled': state.peerInfo.addresses ? undefined : true,
                 'type': 'text',
+                'placeholder': 'eth-ipfs pseudo path',
+                'value': '/eth/latest/number',
+              },
+              oninput: (event) => actions.pseudoQueryDidUpdate(event.target.value),
+            }),
+
+            // cid path
+            h('input#ipfs-dag-query', {
+              'attributes': {
+                'type': 'text',
                 'placeholder': 'CID/path/to/data',
-                'value': 'z43AaGEymG8TWXUuZgFVPB1XkvUadjbwv9RtZignh6kWPmkKNFY/number',
+                'value': state.dagQuery,
               }
             }),
+
             h('button', {
               'attributes': {
                 'disabled': state.peerInfo.addresses ? undefined : true,
                 'type': 'button'
               },
               onclick: (event) => {
-                const input = document.querySelector('#resolve-container input')
+                const input = document.querySelector('#ipfs-dag-query')
                 actions.resolveIpldPath(input.value)
               },
             }, `Resolve Path`),
@@ -55,21 +71,20 @@ function render(state, actions) {
 
           // block inventory
           h('#block-container.panel', [
-            Object.keys(state.blocks).map((blockNumber) => {
-              const block = state.blocks[blockNumber]
-              return h('div', `block: #${parseInt(blockNumber)} cid: ${block.cid}`)
-            })
+            state.blocks.map(renderBlock)
           ]),
 
           // block bridging
           h('#bridge-control.panel', [
+            h('h2', 'Eth-IPFS bridge via RPC'),
+
             h('button#start', {
               'attributes': {
                 'type': 'button',
                 'disabled': !state.isRpcSyncing ? undefined : true,
               },
               onclick: actions.startTracker,
-            }, `Start Eth-RPC Bridge`),
+            }, `Start`),
             `
               `,
             h('button#stop', {
@@ -78,7 +93,7 @@ function render(state, actions) {
                 'type': 'button'
               },
               onclick: actions.stopTracker,
-            }, `Stop Eth-RPC Bridge`),
+            }, `Stop`),
           ]),
 
           // peer status
@@ -133,4 +148,9 @@ function render(state, actions) {
 
     ])
   )
+}
+
+function renderBlock(block) {
+  const number = parseInt(block.number)
+  return h('div', `block: #${number}  ${block.cid}`)
 }

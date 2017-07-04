@@ -19,8 +19,10 @@ let ipfs
 const store = new ObsStore({
   peerInfo: {},
   peers: [],
-  blocks: {},
+  blocks: [],
+  bestBlock: null,
   isRpcSyncing: false,
+  dagQuery: null,
 })
 
 tracker.on('latest', (block) => {
@@ -92,10 +94,16 @@ createNode((err, node) => {
   })
 })
 
-function registerBlockAsLocal (blockData) {
-  const blocks = store.getState().blocks
-  blocks[blockData.number] = blockData
+function registerBlockAsLocal (block) {
+  // add block to collection
+  const { blocks, bestBlock } = store.getState()
+  const blockNumber = parseInt(block.number)
+  blocks[blockNumber] = block
   store.updateState({ blocks })
+  // check if new block is best block
+  if (!bestBlock || (parseInt(block.number) > parseInt(bestBlock.number))) {
+    store.updateState({ bestBlock: block })
+  }
 }
 
 //
@@ -116,13 +124,26 @@ const actions = {
     tracker.stop()
     store.updateState({ isRpcSyncing: false })
   },
+  pseudoQueryDidUpdate: (pseudoQuery) => {
+    const parts = pseudoQuery.split('/')
+    const bestBlock = store.getState().bestBlock
+    if (!bestBlock) return
+    // build ipfs dag query string
+    let dagQueryParts = []
+    // take /eth/latest and replace with latest cid
+    dagQueryParts.push(bestBlock.cid)
+    const remainingParts = parts.slice(3)
+    dagQueryParts = dagQueryParts.concat(remainingParts)
+    const dagQuery = dagQueryParts.join('/')
+    store.updateState({ dagQuery })
+  },
   resolveIpldPath: (pathString) => {
     const pathParts = pathString.split('/')
     const cid = new CID(pathParts[0])
     const path = pathParts.slice(1).join('/')
     console.log(`ipfs.dag.get(${pathParts[0]}, "${path}")`)
     ipfs.dag.get(cid, path).then((result) => {
-      console.log(result)
+      console.log('query result:', result)
     }).catch((err) => {
       console.error(err)
     })
@@ -141,7 +162,7 @@ const actions = {
         element.disabled = false
       }, 500)
     })
-  }
+  },
 }
 
 const { rootNode, updateDom } = vdom()
