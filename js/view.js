@@ -61,14 +61,13 @@ function render(state, actions) {
             `
               `,
             h('button.connect-peer', {
-              'attributes': {
-                'disabled': state.peerInfo.addresses ? undefined : true,
-              }
+              disabled: state.peerInfo.addresses ? undefined : true,
+              onclick: actions.connectToPeer,
             }, `Connect to peer`)
           ])
         ]),
         h('div.clear'),
-        
+
         h('#resolve-container.panel', [
           h('h2', `Resolve from network`),
           h('input', {
@@ -113,7 +112,10 @@ function render(state, actions) {
             return h('div', `block: ${blockNumber} cid: ${block.cid}`)
           })
         ]),
-        h('pre#errors.hidden')
+
+        h('pre#errors',
+          state.error
+        ),
       ])
     ])
 

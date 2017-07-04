@@ -127,6 +127,21 @@ const actions = {
       console.error(err)
     })
   },
+  connectToPeer: (event) => {
+    const element = event.target
+    const input = document.querySelector('input.connect-peer')
+    element.disabled = true
+    ipfs.swarm.connect(input.value, (err) => {
+      if (err) {
+        return onError(err)
+      }
+
+      input.value = ''
+      setTimeout(() => {
+        element.disabled = false
+      }, 500)
+    })
+  }
 }
 
 const { rootNode, updateDom } = vdom()
@@ -147,4 +162,8 @@ function updatePeers () {
     if (err) onError(err)
     store.updateState({ peers })
   })
+}
+
+function onError(error) {
+  store.updateState({ error })
 }
