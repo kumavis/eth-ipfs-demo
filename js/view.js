@@ -43,7 +43,7 @@ function render(state, actions) {
                 'disabled': state.peerInfo.addresses ? undefined : true,
                 'type': 'text',
                 'placeholder': 'eth-ipfs pseudo path',
-                'value': '/eth/latest/number',
+                'value': '/eth/latest/state/0x52bc44d5378309ee2abf1539bf71de1b7d7be3b5/balance',
               },
               oninput: (event) => actions.pseudoQueryDidUpdate(event.target.value),
             }),

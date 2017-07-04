@@ -11,6 +11,8 @@ const createNode = require('./create-node')
 const vdom = require('./vdom')
 const render = require('./view.js')
 
+const BRIDGE_ADDRESS = '/dns4/ipfs.lab.metamask.io/tcp/443/wss/ipfs/QmdcCVdmHsA1s69GhQZrszpnb3wmtRwv81jojAurhsH9cz'
+
 const provider = new HttpProvider('https://mainnet.infura.io')
 const tracker = new BlockTracker({ provider, pollingInterval: 2e3 })
 
@@ -72,9 +74,13 @@ createNode((err, node) => {
   }
   ipfs = node
   global.ipfs = node
+  // connect to bootstrap eth-ipfs bridge node
+  ipfs.swarm.connect(BRIDGE_ADDRESS)
+  // read peer info
   ipfs.id().then((peerInfo) => {
     store.updateState({ peerInfo })
   })
+  // listen for blocks published on the network
   ipfs.pubsub.subscribe('eth-block', {}, (msg) => {
     if (store.getState().isRpcSyncing) return
     const hashBuf = msg.data
@@ -132,7 +138,19 @@ const actions = {
     let dagQueryParts = []
     // take /eth/latest and replace with latest cid
     dagQueryParts.push(bestBlock.cid)
-    const remainingParts = parts.slice(3)
+    let remainingParts = parts.slice(3)
+    // search for hex key in remainingParts
+    remainingParts = remainingParts.map((part) => {
+      // abort if not hex
+      if (part.slice(0,2) !== '0x') return part
+      // hash
+      const keyBuf = new Buffer(part.slice(2), 'hex')
+      const hashString = ethUtil.sha3(keyBuf).toString('hex')
+      // chunked into half-bytes
+      const chunked = hashString.split('').join('/')
+      return chunked
+    })
+    // finalize
     dagQueryParts = dagQueryParts.concat(remainingParts)
     const dagQuery = dagQueryParts.join('/')
     store.updateState({ dagQuery })
@@ -143,7 +161,7 @@ const actions = {
     const path = pathParts.slice(1).join('/')
     console.log(`ipfs.dag.get(${pathParts[0]}, "${path}")`)
     ipfs.dag.get(cid, path).then((result) => {
-      console.log('query result:', result)
+      console.log('query result:', '0x'+result.value.toString('hex'))
     }).catch((err) => {
       console.error(err)
     })
