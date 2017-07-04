@@ -218,6 +218,9 @@ button:focus, input:focus {
 #block-container {
   padding-top: 10px;
   margin: 1%;
+  height: 200px;
+  overflow-y: scroll;
+  font-family: monospace;
 }
 
 .left.centered {
