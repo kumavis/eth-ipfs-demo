@@ -8375,7 +8375,7 @@ exports.createContext = Script.createContext = function (context) {
 };
 
 },{"indexof":8}],43:[function(require,module,exports){
-(function (global){
+(function (global,Buffer){
 window.setImmediate = window.setImmediate || window.setTimeout;
 
 const BlockTracker = require('eth-block-tracker');
@@ -8389,6 +8389,8 @@ const createNode = require('./create-node');
 const vdom = require('./vdom');
 const render = require('./view.js');
 
+const BRIDGE_ADDRESS = '/dns4/ipfs.lab.metamask.io/tcp/443/wss/ipfs/QmdcCVdmHsA1s69GhQZrszpnb3wmtRwv81jojAurhsH9cz';
+
 const provider = new HttpProvider('https://mainnet.infura.io');
 const tracker = new BlockTracker({ provider, pollingInterval: 2e3 });
 
@@ -8399,8 +8401,9 @@ const store = new ObsStore({
   peers: [],
   blocks: [],
   bestBlock: null,
-  isRpcSyncing: false,
-  dagQuery: null
+  pseudoQuery: '/eth/latest/state/0x52bc44d5378309ee2abf1539bf71de1b7d7be3b5/balance',
+  dagQuery: '',
+  isRpcSyncing: false
 });
 
 tracker.on('latest', block => {
@@ -8450,9 +8453,13 @@ createNode((err, node) => {
   }
   ipfs = node;
   global.ipfs = node;
+  // connect to bootstrap eth-ipfs bridge node
+  ipfs.swarm.connect(BRIDGE_ADDRESS);
+  // read peer info
   ipfs.id().then(peerInfo => {
     store.updateState({ peerInfo });
   });
+  // listen for blocks published on the network
   ipfs.pubsub.subscribe('eth-block', {}, msg => {
     if (store.getState().isRpcSyncing) return;
     const hashBuf = msg.data;
@@ -8480,7 +8487,7 @@ function registerBlockAsLocal(block) {
   store.updateState({ blocks });
   // check if new block is best block
   if (!bestBlock || parseInt(block.number) > parseInt(bestBlock.number)) {
-    store.updateState({ bestBlock: block });
+    actions.setBestBlock(block);
   }
 }
 
@@ -8502,15 +8509,35 @@ const actions = {
     tracker.stop();
     store.updateState({ isRpcSyncing: false });
   },
-  pseudoQueryDidUpdate: pseudoQuery => {
+  setPseudoQuery: pseudoQuery => {
+    store.updateState({ pseudoQuery });
+    actions.updateDagQuery();
+  },
+  setBestBlock: bestBlock => {
+    store.updateState({ bestBlock });
+    actions.updateDagQuery();
+  },
+  updateDagQuery: () => {
+    const { pseudoQuery, bestBlock } = store.getState();
     const parts = pseudoQuery.split('/');
-    const bestBlock = store.getState().bestBlock;
     if (!bestBlock) return;
     // build ipfs dag query string
     let dagQueryParts = [];
     // take /eth/latest and replace with latest cid
     dagQueryParts.push(bestBlock.cid);
-    const remainingParts = parts.slice(3);
+    let remainingParts = parts.slice(3);
+    // search for hex key in remainingParts
+    remainingParts = remainingParts.map(part => {
+      // abort if not hex
+      if (part.slice(0, 2) !== '0x') return part;
+      // hash
+      const keyBuf = new Buffer(part.slice(2), 'hex');
+      const hashString = ethUtil.sha3(keyBuf).toString('hex');
+      // chunked into half-bytes
+      const chunked = hashString.split('').join('/');
+      return chunked;
+    });
+    // finalize
     dagQueryParts = dagQueryParts.concat(remainingParts);
     const dagQuery = dagQueryParts.join('/');
     store.updateState({ dagQuery });
@@ -8521,7 +8548,7 @@ const actions = {
     const path = pathParts.slice(1).join('/');
     console.log(`ipfs.dag.get(${pathParts[0]}, "${path}")`);
     ipfs.dag.get(cid, path).then(result => {
-      console.log('query result:', result);
+      console.log('query result:', '0x' + result.value.toString('hex'));
     }).catch(err => {
       console.error(err);
     });
@@ -8567,8 +8594,8 @@ function onError(error) {
   store.updateState({ error });
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./create-node":44,"./vdom":45,"./view.js":46,"cids":165,"eth-block-tracker":323,"ethereumjs-block/header":328,"ethereumjs-util":330,"ethjs-provider-http":331,"ipld-eth-block/src/common":540,"obs-store":790}],44:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
+},{"./create-node":44,"./vdom":45,"./view.js":46,"buffer":4,"cids":165,"eth-block-tracker":323,"ethereumjs-block/header":328,"ethereumjs-util":330,"ethjs-provider-http":331,"ipld-eth-block/src/common":540,"obs-store":790}],44:[function(require,module,exports){
 'use strict';
 
 const Ipfs = require('ipfs');
@@ -8643,9 +8670,9 @@ function render(state, actions) {
       'disabled': state.peerInfo.addresses ? undefined : true,
       'type': 'text',
       'placeholder': 'eth-ipfs pseudo path',
-      'value': '/eth/latest/number'
+      'value': state.pseudoQuery
     },
-    oninput: event => actions.pseudoQueryDidUpdate(event.target.value)
+    oninput: event => actions.setPseudoQuery(event.target.value)
   }),
 
   // cid path
@@ -8667,7 +8694,7 @@ function render(state, actions) {
   }, `Resolve Path`)]),
 
   // block inventory
-  h('#block-container.panel', [state.blocks.map(renderBlock)]),
+  h('#block-container.panel', [state.blocks.slice().reverse().map(renderBlock)]),
 
   // block bridging
   h('#bridge-control.panel', [h('h2', 'Eth-IPFS bridge via RPC'), h('button#start', {
