@@ -11,7 +11,10 @@ const createNode = require('./create-node')
 const vdom = require('./vdom')
 const render = require('./view.js')
 
-const BRIDGE_ADDRESS = '/dns4/ipfs.lab.metamask.io/tcp/443/wss/ipfs/QmdcCVdmHsA1s69GhQZrszpnb3wmtRwv81jojAurhsH9cz'
+const ETH_IPFS_BRIDGES = [
+  '/dns4/ipfs.lab.metamask.io/tcp/443/wss/ipfs/QmdcCVdmHsA1s69GhQZrszpnb3wmtRwv81jojAurhsH9cz',
+  '/dns4/fox.musteka.la/tcp/443/wss/ipfs/Qmc7etyUd9tEa3ZBD3LCTMDL96qcMi8cKfHEiLt5nhVdVC',
+]
 
 const provider = new HttpProvider('https://mainnet.infura.io')
 const tracker = new BlockTracker({ provider, pollingInterval: 4e3 })
@@ -75,8 +78,9 @@ createNode((err, node) => {
   }
   ipfs = node
   global.ipfs = node
-  // connect to bootstrap eth-ipfs bridge node
-  ipfs.swarm.connect(BRIDGE_ADDRESS)
+
+  // connect to bootstrap eth-ipfs bridge nodes
+  ETH_IPFS_BRIDGES.map((address) => ipfs.swarm.connect(address))
   // read peer info
   ipfs.id().then((peerInfo) => {
     store.updateState({ peerInfo })
