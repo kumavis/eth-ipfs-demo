@@ -18,6 +18,7 @@ body {
 .panel {
   background-color: rgb(6, 40, 60);
   margin-bottom: 20px;
+  overflow: hidden;
 }
 
 .wrapper {
@@ -109,6 +110,11 @@ button {
   margin: 5px;
 }
 
+button:hover {
+  color: white;
+  border-color: white;
+}
+
 .multihash-wrapper input {
   width: 80%;
   float: left;
@@ -143,14 +149,17 @@ button.connect-peer {
   width: 100%;
 }
 
-button:hover {
-  color: white;
-  border: 2px solid white;
-  cursor: pointer;
+button.disconnect-peer {
+  padding: 2px;
+  margin: 0;
+  border-width: 1px;
+  font-size: 8px;
 }
 
+
 .address {
-  font-family: monospace
+  font-family: monospace;
+  white-space: nowrap;
 }
 
 

@@ -14,7 +14,7 @@ const render = require('./view.js')
 const BRIDGE_ADDRESS = '/dns4/ipfs.lab.metamask.io/tcp/443/wss/ipfs/QmdcCVdmHsA1s69GhQZrszpnb3wmtRwv81jojAurhsH9cz'
 
 const provider = new HttpProvider('https://mainnet.infura.io')
-const tracker = new BlockTracker({ provider, pollingInterval: 2e3 })
+const tracker = new BlockTracker({ provider, pollingInterval: 4e3 })
 
 let ipfs
 
@@ -33,8 +33,8 @@ tracker.on('latest', (block) => {
   ipfs.pubsub.publish('eth-block', ethUtil.toBuffer(block.hash), (err) => {
     console.log('pubsub pub status:', err)
   })
-})
 
+})
 tracker.on('block', (block) => {
   // log block
   console.log('new block:', block.number)
@@ -178,16 +178,38 @@ const actions = {
   connectToPeer: (event) => {
     const element = event.target
     const input = document.querySelector('input.connect-peer')
+    const address = input.value
     element.disabled = true
-    ipfs.swarm.connect(input.value, (err) => {
+    ipfs.swarm.connect(address, (err) => {
       if (err) {
         return onError(err)
       }
 
+      // clear input
       input.value = ''
       setTimeout(() => {
         element.disabled = false
       }, 500)
+    })
+  },
+  disconnectFromPeer: async (event) => {
+    const element = event.target
+    const address = element.getAttribute('data-address')
+    const peers = await ipfs.swarm.peers()
+    const peer = peers.find((peer) => peer.addr.toString() === address)
+    if (!peer) return
+    const peerInfo = peer.peer
+    element.disabled = true
+    peer.isDisconnecting = true
+    ipfs.swarm.disconnect(peerInfo, (err) => {
+      element.disabled = false
+      if (err) {
+        return onError(err)
+      }
+      // manually remove from peerBook
+      // https://github.com/libp2p/js-libp2p-swarm/issues/221
+      ipfs._peerInfoBook.remove(peerInfo)
+      updatePeerList()
     })
   },
 }
@@ -198,11 +220,11 @@ store.subscribe((state) => {
   updateDom(render(state, actions))
 })
 
-setInterval(updatePeers, 1000)
+setInterval(updatePeerList, 1000)
 
 // Get peers from IPFS and display them
 let numberOfPeersLastTime = 0
-function updatePeers () {
+function updatePeerList () {
   if (!ipfs) return
   // Once in a while, we need to refresh our list of peers in the UI
   // .swarm.peers returns an array with all our currently connected peer

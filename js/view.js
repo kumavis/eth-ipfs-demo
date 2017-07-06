@@ -59,7 +59,7 @@ function render(state, actions) {
 
             h('button', {
               'attributes': {
-                'disabled': state.peerInfo.addresses ? undefined : true,
+                'disabled': state.bestBlock ? undefined : true,
                 'type': 'button'
               },
               onclick: (event) => {
@@ -115,9 +115,22 @@ function render(state, actions) {
               h('h2', 'Remote Peers'),
               (
                 state.peers.length ?
-                  h('ul', [
-                    state.peers.map((peer) => h('li', peer.addr.toString()))
-                  ])
+                  h('ul', state.peers.map((peer) => {
+                    const address = peer.addr.toString()
+                    return (
+                      h('li', [
+                        h('button.disconnect-peer', {
+                          attributes: {
+                            'data-address': address,
+                            disabled: peer.isDisconnecting,
+                          },
+                          onclick: actions.disconnectFromPeer,
+                        }, 'x'),
+                        h('span.address', address),
+                      ])
+                    )
+                  })
+                )
                 : h('i', 'Waiting for peers...')
               ),
             ]),
