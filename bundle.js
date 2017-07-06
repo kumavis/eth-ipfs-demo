@@ -8376,6 +8376,8 @@ exports.createContext = Script.createContext = function (context) {
 
 },{"indexof":8}],43:[function(require,module,exports){
 (function (global,Buffer){
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
 window.setImmediate = window.setImmediate || window.setTimeout;
 
 const BlockTracker = require('eth-block-tracker');
@@ -8389,10 +8391,10 @@ const createNode = require('./create-node');
 const vdom = require('./vdom');
 const render = require('./view.js');
 
-const BRIDGE_ADDRESS = '/dns4/ipfs.lab.metamask.io/tcp/443/wss/ipfs/QmdcCVdmHsA1s69GhQZrszpnb3wmtRwv81jojAurhsH9cz';
+const ETH_IPFS_BRIDGES = ['/dns4/ipfs.lab.metamask.io/tcp/443/wss/ipfs/QmdcCVdmHsA1s69GhQZrszpnb3wmtRwv81jojAurhsH9cz', '/dns4/fox.musteka.la/tcp/443/wss/ipfs/Qmc7etyUd9tEa3ZBD3LCTMDL96qcMi8cKfHEiLt5nhVdVC'];
 
 const provider = new HttpProvider('https://mainnet.infura.io');
-const tracker = new BlockTracker({ provider, pollingInterval: 2e3 });
+const tracker = new BlockTracker({ provider, pollingInterval: 4e3 });
 
 let ipfs;
 
@@ -8412,7 +8414,6 @@ tracker.on('latest', block => {
     console.log('pubsub pub status:', err);
   });
 });
-
 tracker.on('block', block => {
   // log block
   console.log('new block:', block.number);
@@ -8453,8 +8454,9 @@ createNode((err, node) => {
   }
   ipfs = node;
   global.ipfs = node;
-  // connect to bootstrap eth-ipfs bridge node
-  ipfs.swarm.connect(BRIDGE_ADDRESS);
+
+  // connect to bootstrap eth-ipfs bridge nodes
+  ETH_IPFS_BRIDGES.map(address => ipfs.swarm.connect(address));
   // read peer info
   ipfs.id().then(peerInfo => {
     store.updateState({ peerInfo });
@@ -8556,18 +8558,48 @@ const actions = {
   connectToPeer: event => {
     const element = event.target;
     const input = document.querySelector('input.connect-peer');
+    const address = input.value;
     element.disabled = true;
-    ipfs.swarm.connect(input.value, err => {
+    ipfs.swarm.connect(address, err => {
       if (err) {
         return onError(err);
       }
 
+      // clear input
       input.value = '';
       setTimeout(() => {
         element.disabled = false;
       }, 500);
     });
-  }
+  },
+  disconnectFromPeer: (() => {
+    var _ref = _asyncToGenerator(function* (event) {
+      const element = event.target;
+      const address = element.getAttribute('data-address');
+      const peers = yield ipfs.swarm.peers();
+      const peer = peers.find(function (peer) {
+        return peer.addr.toString() === address;
+      });
+      if (!peer) return;
+      const peerInfo = peer.peer;
+      element.disabled = true;
+      peer.isDisconnecting = true;
+      ipfs.swarm.disconnect(peerInfo, function (err) {
+        element.disabled = false;
+        if (err) {
+          return onError(err);
+        }
+        // manually remove from peerBook
+        // https://github.com/libp2p/js-libp2p-swarm/issues/221
+        ipfs._peerInfoBook.remove(peerInfo);
+        updatePeerList();
+      });
+    });
+
+    return function disconnectFromPeer(_x) {
+      return _ref.apply(this, arguments);
+    };
+  })()
 };
 
 const { rootNode, updateDom } = vdom();
@@ -8576,11 +8608,11 @@ store.subscribe(state => {
   updateDom(render(state, actions));
 });
 
-setInterval(updatePeers, 1000);
+setInterval(updatePeerList, 1000);
 
 // Get peers from IPFS and display them
 let numberOfPeersLastTime = 0;
-function updatePeers() {
+function updatePeerList() {
   if (!ipfs) return;
   // Once in a while, we need to refresh our list of peers in the UI
   // .swarm.peers returns an array with all our currently connected peer
@@ -8684,7 +8716,7 @@ function render(state, actions) {
     }
   }), h('button', {
     'attributes': {
-      'disabled': state.peerInfo.addresses ? undefined : true,
+      'disabled': state.bestBlock ? undefined : true,
       'type': 'button'
     },
     onclick: event => {
@@ -8713,7 +8745,16 @@ function render(state, actions) {
   }, `Stop`)]),
 
   // peer status
-  h('div.left.panel', [h('div#details' + state.peerInfo.addresses ? '' : '.disabled', [h('h2', `Your daemon`), h('h3', `ID`), h('pre.id-container', state.peerInfo.id), h('h3', `Addresses`), h('ul.addresses-container', [state.peerInfo.addresses ? state.peerInfo.addresses.map(address => h('li', [h('span.address', address)])) : h('li', `Not yet online`)])])]), h('div.right.panel', [h('div#peers' + state.peers.length ? '' : '.disabled', [h('h2', 'Remote Peers'), state.peers.length ? h('ul', [state.peers.map(peer => h('li', peer.addr.toString()))]) : h('i', 'Waiting for peers...')]), h('div', [h('input.connect-peer', {
+  h('div.left.panel', [h('div#details' + state.peerInfo.addresses ? '' : '.disabled', [h('h2', `Your daemon`), h('h3', `ID`), h('pre.id-container', state.peerInfo.id), h('h3', `Addresses`), h('ul.addresses-container', [state.peerInfo.addresses ? state.peerInfo.addresses.map(address => h('li', [h('span.address', address)])) : h('li', `Not yet online`)])])]), h('div.right.panel', [h('div#peers' + state.peers.length ? '' : '.disabled', [h('h2', 'Remote Peers'), state.peers.length ? h('ul', state.peers.map(peer => {
+    const address = peer.addr.toString();
+    return h('li', [h('button.disconnect-peer', {
+      attributes: {
+        'data-address': address,
+        disabled: peer.isDisconnecting
+      },
+      onclick: actions.disconnectFromPeer
+    }, 'x'), h('span.address', address)]);
+  })) : h('i', 'Waiting for peers...')]), h('div', [h('input.connect-peer', {
     'attributes': {
       'disabled': state.peerInfo.addresses ? undefined : true,
       'type': 'text',
