@@ -39,15 +39,15 @@ tracker.on('block', (blockParams) => {
   // add to ipfs
   const blockHeader = blockHeaderFromRpc(blockParams)
   const rawBlock = blockHeader.serialize()
-  const cid = cidFromHash('eth-block', blockHeader.hash)
+  const cid = cidFromHash('eth-block', blockHeader.hash())
   ipfs.block.put(rawBlock, cid, function(err){
     if (err) console.error(err)
   })
   // add to state
   registerBlockAsLocal({
     cid: cid.toBaseEncodedString(),
-    hash: block.hash,
-    number: block.number,
+    hash: blockParams.hash,
+    number: blockParams.number,
   })
 })
 

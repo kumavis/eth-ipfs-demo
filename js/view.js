@@ -66,7 +66,7 @@ function render(state, actions) {
                 const input = document.querySelector('#ipfs-dag-query')
                 actions.resolveIpldPath(input.value)
               },
-            }, `Resolve Path`),
+            }, `Lookup`),
           ]),
 
           // block inventory
