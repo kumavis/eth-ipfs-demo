@@ -8,6 +8,7 @@
   "license": "MIT",
   "dependencies": {
     "eth-block-tracker": "^1.0.1",
+    "ethereumjs-block": "^1.6.0",
     "ethjs-provider-http": "^0.1.6",
     "ipfs": "ipfs/js-ipfs#3c0e52a5ce443a32ecfdb51e2bffe9357029db0e",
     "obs-store": "^2.3.2",

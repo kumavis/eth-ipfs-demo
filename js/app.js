@@ -2,7 +2,7 @@ window.setImmediate = window.setImmediate || window.setTimeout
 
 const BlockTracker = require('eth-block-tracker')
 const HttpProvider = require('ethjs-provider-http')
-const BlockHeader = require('ethereumjs-block/header')
+const blockHeaderFromRpc = require('ethereumjs-block/header-from-rpc')
 const ethUtil = require('ethereumjs-util')
 const cidFromHash = require('ipld-eth-star/util/cidFromHash')
 const CID = require('cids')
@@ -35,26 +35,11 @@ const store = new ObsStore({
   isRpcSyncing: false,
 })
 
-tracker.on('block', (block) => {
+tracker.on('block', (blockParams) => {
   // add to ipfs
-  const blockHeader = new BlockHeader()
-  blockHeader.parentHash = block.parentHash
-  blockHeader.uncleHash = block.sha3Uncles
-  blockHeader.coinbase = block.miner
-  blockHeader.stateRoot = block.stateRoot
-  blockHeader.transactionsTrie = block.transactionsRoot
-  blockHeader.receiptTrie = block.receiptRoot || block.receiptsRoot || ethUtil.SHA3_NULL
-  blockHeader.bloom = block.logsBloom
-  blockHeader.difficulty = block.difficulty
-  blockHeader.number = block.number
-  blockHeader.gasLimit = block.gasLimit
-  blockHeader.gasUsed = block.gasUsed
-  blockHeader.timestamp = block.timestamp
-  blockHeader.extraData = block.extraData
-  blockHeader.mixHash = block.mixHash
-  blockHeader.nonce = block.nonce
+  const blockHeader = blockHeaderFromRpc(blockParams)
   const rawBlock = blockHeader.serialize()
-  const cid = cidFromHash('eth-block', ethUtil.toBuffer(block.hash))
+  const cid = cidFromHash('eth-block', blockHeader.hash)
   ipfs.block.put(rawBlock, cid, function(err){
     if (err) console.error(err)
   })
