@@ -31,16 +31,7 @@ const store = new ObsStore({
   isRpcSyncing: false,
 })
 
-tracker.on('latest', (block) => {
-  console.log('new head:', block.number)
-  ipfs.pubsub.publish('eth-block', ethUtil.toBuffer(block.hash), (err) => {
-    console.log('pubsub pub status:', err)
-  })
-
-})
 tracker.on('block', (block) => {
-  // log block
-  console.log('new block:', block.number)
   // add to ipfs
   const blockHeader = new BlockHeader()
   blockHeader.parentHash = block.parentHash
@@ -62,7 +53,6 @@ tracker.on('block', (block) => {
   const cid = cidFromHash('eth-block', ethUtil.toBuffer(block.hash))
   ipfs.block.put(rawBlock, cid, function(err){
     if (err) console.error(err)
-    // console.log('ipfs.block.put', arguments)
   })
   // add to state
   registerBlockAsLocal({
@@ -85,24 +75,6 @@ createNode((err, node) => {
   ipfs.id().then((peerInfo) => {
     store.updateState({ peerInfo })
   })
-  // listen for blocks published on the network
-  ipfs.pubsub.subscribe('eth-block', {}, (msg) => {
-    if (store.getState().isRpcSyncing) return
-    const hashBuf = msg.data
-    const hashHex = ethUtil.bufferToHex(hashBuf)
-    console.log('pubsub head!', hashHex)
-    const cid = cidFromHash('eth-block', hashBuf)
-    ipfs.block.get(cid, function(err, ipfsBlock){
-      if (err) return console.error(err)
-      const ethBlock = new BlockHeader(ipfsBlock.data)
-      console.log('ethBlock.number:', ethBlock.number)
-      registerBlockAsLocal({
-        cid: cid.toBaseEncodedString(),
-        hash: hashHex,
-        number: ethUtil.bufferToHex(ethBlock.number),
-      })
-    })
-  })
 })
 
 function registerBlockAsLocal (block) {
@@ -120,8 +92,6 @@ function registerBlockAsLocal (block) {
 //
 // view
 //
-
-// z43AaGEymG8TWXUuZgFVPB1XkvUadjbwv9RtZignh6kWPmkKNFY/number
 
 const actions = {
   startTracker: () => {
