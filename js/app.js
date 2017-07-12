@@ -4,7 +4,7 @@ const BlockTracker = require('eth-block-tracker')
 const HttpProvider = require('ethjs-provider-http')
 const BlockHeader = require('ethereumjs-block/header')
 const ethUtil = require('ethereumjs-util')
-const cidForHash = require('ipld-eth-block/src/common').cidForHash
+const cidFromHash = require('ipld-eth-star/util/cidFromHash')
 const CID = require('cids')
 const ObsStore = require('obs-store')
 const createNode = require('./create-node')
@@ -59,7 +59,7 @@ tracker.on('block', (block) => {
   blockHeader.mixHash = block.mixHash
   blockHeader.nonce = block.nonce
   const rawBlock = blockHeader.serialize()
-  const cid = cidForHash('eth-block', ethUtil.toBuffer(block.hash))
+  const cid = cidFromHash('eth-block', ethUtil.toBuffer(block.hash))
   ipfs.block.put(rawBlock, cid, function(err){
     if (err) console.error(err)
     // console.log('ipfs.block.put', arguments)
@@ -91,7 +91,7 @@ createNode((err, node) => {
     const hashBuf = msg.data
     const hashHex = ethUtil.bufferToHex(hashBuf)
     console.log('pubsub head!', hashHex)
-    const cid = cidForHash('eth-block', hashBuf)
+    const cid = cidFromHash('eth-block', hashBuf)
     ipfs.block.get(cid, function(err, ipfsBlock){
       if (err) return console.error(err)
       const ethBlock = new BlockHeader(ipfsBlock.data)

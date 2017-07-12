@@ -2,33 +2,16 @@
   "name": "metamask-mesh",
   "version": "1.0.0",
   "scripts": {
-    "start": "beefy js/app.js:bundle.js --live --open -- -r browserify-zlib-next:zlib",
-    "build": "browserify js/app.js -r browserify-zlib-next:zlib -o bundle.js"
+    "start": "beefy js/app.js:bundle.js --live --open",
+    "build": "browserify js/app.js -o bundle.js"
   },
   "license": "MIT",
-  "browserify": {
-    "transform": [
-      [
-        "babelify",
-        {
-          "presets": [
-            "es2017"
-          ]
-        }
-      ]
-    ]
-  },
-  "devDependencies": {
-    "http-server": "^0.9.0"
-  },
   "dependencies": {
-    "babel-preset-es2017": "^6.22.0",
-    "babelify": "^7.3.0",
-    "browserify-zlib-next": "^1.0.1",
     "eth-block-tracker": "^1.0.1",
     "ethjs-provider-http": "^0.1.6",
-    "ipfs": "^0.24.0",
+    "ipfs": "ipfs/js-ipfs#3c0e52a5ce443a32ecfdb51e2bffe9357029db0e",
     "obs-store": "^2.3.2",
+    "pull-stream": "^3.6.0",
     "virtual-dom": "^2.1.1"
   }
 }
