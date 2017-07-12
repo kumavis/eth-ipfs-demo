@@ -210,9 +210,6 @@ const actions = {
       if (err) {
         return onError(err)
       }
-      // manually remove from peerBook
-      // https://github.com/libp2p/js-libp2p-swarm/issues/221
-      ipfs._peerInfoBook.remove(peerInfo)
       updatePeerList()
     })
   },
