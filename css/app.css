@@ -261,3 +261,9 @@ button:focus, input:focus {
 .error {
   font-size: 18px;
 }
+
+#ipfs-dag-result {
+  background: white;
+  color: black;
+  padding: 10px;
+}

@@ -132,8 +132,13 @@ const actions = {
     const cid = new CID(pathParts[0])
     const path = pathParts.slice(1).join('/')
     console.log(`ipfs.dag.get(${pathParts[0]}, "${path}")`)
+    const resultDisplay = document.querySelector('#ipfs-dag-result')
+    resultDisplay.value = ''
     ipfs.dag.get(cid, path).then((result) => {
-      console.log('query result:', '0x'+result.value.toString('hex'))
+      const resultHex = '0x'+result.value.toString('hex')
+      console.log('query result:', resultHex)
+      const resultDisplay = document.querySelector('#ipfs-dag-result')
+      resultDisplay.value = resultHex
     }).catch((err) => {
       console.error(err)
     })

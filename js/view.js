@@ -67,6 +67,13 @@ function render(state, actions) {
                 actions.resolveIpldPath(input.value)
               },
             }, `Lookup`),
+
+            // cid path
+            h('input#ipfs-dag-result', {
+              type: 'text',
+              disabled: true,
+            }),
+
           ]),
 
           // block inventory
