@@ -1,7 +1,4 @@
-window.setImmediate = window.setImmediate || window.setTimeout
-
-const BlockTracker = require('eth-block-tracker')
-const HttpProvider = require('ethjs-provider-http')
+'use strict'
 const blockHeaderFromRpc = require('ethereumjs-block/header-from-rpc')
 const ethUtil = require('ethereumjs-util')
 const cidFromHash = require('ipld-eth-star/util/cidFromHash')
@@ -10,6 +7,7 @@ const ObsStore = require('obs-store')
 const createNode = require('./create-node')
 const vdom = require('./vdom')
 const render = require('./view.js')
+const createIpfsEthProvider = require('./createIpfsEthProvider')
 
 const ETH_IPFS_BRIDGES = [
   '/dns4/ipfs.lab.metamask.io/tcp/443/wss/ipfs/QmdcCVdmHsA1s69GhQZrszpnb3wmtRwv81jojAurhsH9cz',
@@ -19,9 +17,6 @@ const ETH_IPFS_BRIDGES = [
   '/dns4/panda.musteka.la/tcp/443/wss/ipfs/QmUGARsthjG4EJBCrYzkuCESjn5G2akmmuawKPbZrFM3E5',
   '/dns4/tiger.musteka.la/tcp/443/wss/ipfs/QmXFdPj3FuVpkgmNHNTFitkp4DSmVuF6HxNX6tCZr4LFz9',
 ]
-
-const provider = new HttpProvider('https://mainnet.infura.io')
-const tracker = new BlockTracker({ provider, pollingInterval: 4e3 })
 
 let ipfs
 
@@ -35,28 +30,31 @@ const store = new ObsStore({
   isRpcSyncing: false,
 })
 
-tracker.on('block', (blockParams) => {
-  // add to ipfs
-  const blockHeader = blockHeaderFromRpc(blockParams)
-  const rawBlock = blockHeader.serialize()
-  const cid = cidFromHash('eth-block', blockHeader.hash())
-  ipfs.block.put(rawBlock, cid, function(err){
-    if (err) console.error(err)
-  })
-  // add to state
-  registerBlockAsLocal({
-    cid: cid.toBaseEncodedString(),
-    hash: blockParams.hash,
-    number: blockParams.number,
-  })
-})
-
 createNode((err, node) => {
   if (err) {
     return console.error(err)
   }
   ipfs = node
   global.ipfs = node
+
+  global.tools = createIpfsEthProvider({ ipfs, rpcUrl: 'https://mainnet.infura.io/' })
+
+  // setup block storage
+  global.tools.blockTracker.on('block', (blockParams) => {
+    // add to ipfs
+    const blockHeader = blockHeaderFromRpc(blockParams)
+    const rawBlock = blockHeader.serialize()
+    const cid = cidFromHash('eth-block', blockHeader.hash())
+    ipfs.block.put(rawBlock, cid, function(err){
+      if (err) console.error(err)
+    })
+    // add to state
+    registerBlockAsLocal({
+      cid: cid.toBaseEncodedString(),
+      hash: blockParams.hash,
+      number: blockParams.number,
+    })
+  })
 
   // connect to bootstrap eth-ipfs bridge nodes
   ETH_IPFS_BRIDGES.map((address) => ipfs.swarm.connect(address))
@@ -82,16 +80,15 @@ function registerBlockAsLocal (block) {
 // view
 //
 
-const actions = {
+const actions = global.actions = {
   startTracker: () => {
     console.log('start rpc sync...')
-    tracker.start()
-    // tracker.start({ fromBlock: '0x2d5068' })
+    global.tools.blockTracker.start()
     store.updateState({ isRpcSyncing: true })
   },
   stopTracker: () => {
     console.log('stop rpc sync...')
-    tracker.stop()
+    global.tools.blockTracker.stop()
     store.updateState({ isRpcSyncing: false })
   },
   setPseudoQuery: (pseudoQuery) => {
@@ -142,6 +139,23 @@ const actions = {
     }).catch((err) => {
       console.error(err)
     })
+  },
+  lookupTokenSupply: async () => {
+    const tokenABI = [{
+      "constant": true,
+      "inputs": [],
+      "name": "totalSupply",
+      "outputs":[{"name": "","type": "uint256"}],
+      "payable": false,
+      "type": "function",
+    }]
+
+    // gnosis
+    const token = tools.eth.contract(tokenABI).at('0x6810e776880c02933d47db1b9fc05908e5386b96')
+    const returnValues = await token.totalSupply()
+    // parse return values
+    const supply = returnValues[0]
+    console.log('supply:', supply.toString(16))
   },
   connectToPeer: (event) => {
     const element = event.target
