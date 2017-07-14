@@ -8,7 +8,7 @@
   "license": "MIT",
   "dependencies": {
     "eth-block-tracker": "^1.0.1",
-    "eth-json-rpc-ipfs": "^1.0.1",
+    "eth-json-rpc-ipfs": "^1.0.2",
     "eth-json-rpc-middleware": "^1.2.6",
     "ethereumjs-block": "^1.6.0",
     "ethjs": "^0.2.7",
