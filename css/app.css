@@ -2,7 +2,7 @@ body {
   height: 100vh;
   font-family: sans-serif;
   color: white;
-  background: linear-gradient(to bottom,#041727 0%,#062b3f 100%);
+  background: #041727;
   pointer-events: auto;
 }
 
@@ -266,4 +266,8 @@ button:focus, input:focus {
   background: white;
   color: black;
   padding: 10px;
+}
+
+.space-top {
+  padding-top: 40px;
 }

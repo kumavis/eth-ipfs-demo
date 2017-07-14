@@ -16,7 +16,7 @@ function createIpfsEthProvider ({ ipfs, rpcUrl }) {
   // create data source
   const { dataEngine } = createDataEngine({ rpcUrl })
   const dataProvider = providerFromEngine(dataEngine)
-  const blockTracker = new BlockTracker({ provider: dataProvider, pollingInterval: 4e3 })
+  const blockTracker = new BlockTracker({ provider: dataProvider, pollingInterval: 8e3 })
   // add handlers
   engine.push(createVmMiddleware({ provider }))
   engine.push(createIpfsMiddleware({ blockTracker, ipfs }))

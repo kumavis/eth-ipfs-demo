@@ -27,6 +27,7 @@ const store = new ObsStore({
   bestBlock: null,
   pseudoQuery: '/eth/latest/state/0x52bc44d5378309ee2abf1539bf71de1b7d7be3b5/balance',
   dagQuery: '',
+  tokenHolder: '0x1d805bc00b8fa3c96ae6c8fa97b2fd24b19a9801',
   isRpcSyncing: false,
 })
 
@@ -140,22 +141,40 @@ const actions = global.actions = {
       console.error(err)
     })
   },
-  lookupTokenSupply: async () => {
-    const tokenABI = [{
-      "constant": true,
-      "inputs": [],
-      "name": "totalSupply",
-      "outputs":[{"name": "","type": "uint256"}],
-      "payable": false,
-      "type": "function",
-    }]
+  setTokenHolder: (tokenHolder) => {
+    store.updateState({ tokenHolder })
+  },
+  lookupTokenBalance: async () => {
+    const resultDisplay = document.querySelector('#token-result')
+    resultDisplay.value = ''
 
     // gnosis
+    const tokenABI = [{
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_owner",
+          "type": "address"
+        }
+      ],
+      "name": "balanceOf",
+      "outputs": [
+        {
+          "name": "balance",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    }]
     const token = tools.eth.contract(tokenABI).at('0x6810e776880c02933d47db1b9fc05908e5386b96')
-    const returnValues = await token.totalSupply()
+    const { tokenHolder } = store.getState()
+    const returnValues = await token.balanceOf(tokenHolder)
     // parse return values
-    const supply = returnValues[0]
-    console.log('supply:', supply.toString(16))
+    const balance = parseInt(returnValues[0].toString(16), 16)/1e18
+
+    console.log('balance:', balance)
+    resultDisplay.value = balance
   },
   connectToPeer: (event) => {
     const element = event.target
@@ -199,7 +218,7 @@ store.subscribe((state) => {
   updateDom(render(state, actions))
 })
 
-setInterval(updatePeerList, 1000)
+setInterval(updatePeerList, 2000)
 
 // Get peers from IPFS and display them
 let numberOfPeersLastTime = 0

@@ -30,60 +30,12 @@ function render(state, actions) {
       h('div.wrapper', [
         h('div#ipfs.ipfs', [
 
-          // data lookups
-          h('#resolve-container.panel', [
-            // h('h2', `Resolve from network`),
-
-            h('div', 'best block:'),
-            state.bestBlock ? renderBlock(state.bestBlock) : h('div', '(none)'),
-
-            // pseudo path
-            h('input#eth-pseudo-query', {
-              'attributes': {
-                'disabled': state.peerInfo.addresses ? undefined : true,
-                'type': 'text',
-                'placeholder': 'eth-ipfs pseudo path',
-                'value': state.pseudoQuery,
-              },
-              oninput: (event) => actions.setPseudoQuery(event.target.value),
-            }),
-
-            // cid path
-            h('input#ipfs-dag-query', {
-              'attributes': {
-                'type': 'text',
-                'placeholder': 'CID/path/to/data',
-                'value': state.dagQuery,
-              }
-            }),
-
-            h('button', {
-              'attributes': {
-                'disabled': state.bestBlock ? undefined : true,
-                'type': 'button'
-              },
-              onclick: (event) => {
-                const input = document.querySelector('#ipfs-dag-query')
-                actions.resolveIpldPath(input.value)
-              },
-            }, `Lookup`),
-
-            // cid path
-            h('input#ipfs-dag-result', {
-              type: 'text',
-              disabled: true,
-            }),
-
-          ]),
-
-          // block inventory
-          h('#block-container.panel', [
-            state.blocks.slice().reverse().map(renderBlock)
-          ]),
-
           // block bridging
           h('#bridge-control.panel', [
             h('h2', 'Eth-IPFS bridge via RPC'),
+
+            h('div', 'best block:'),
+            state.bestBlock ? renderBlock(state.bestBlock) : h('div', '(none)'),
 
             h('button#start', {
               'attributes': {
@@ -101,6 +53,94 @@ function render(state, actions) {
               },
               onclick: actions.stopTracker,
             }, `Stop`),
+          ]),
+
+          // block inventory
+          h('#block-container.panel', [
+            state.blocks.slice().reverse().map(renderBlock)
+          ]),
+
+          // data lookups
+          h('#query-container.panel', [
+            // h('h2', `Resolve from network`),
+
+            //
+            // general query
+            //
+
+            h('h2.space-top', 'Query lookup'),
+
+            // pseudo path
+            h('input#eth-pseudo-query', {
+              'attributes': {
+                'type': 'text',
+                'placeholder': 'eth-ipfs pseudo path',
+                'value': state.pseudoQuery,
+              },
+              oninput: (event) => actions.setPseudoQuery(event.target.value),
+            }),
+
+            // dag path
+            h('input#ipfs-dag-query', {
+              'attributes': {
+                'type': 'text',
+                'placeholder': 'CID/path/to/data',
+                'value': state.dagQuery,
+              }
+            }),
+
+            h('button', {
+              'attributes': {
+                'disabled': state.bestBlock ? undefined : true,
+                'type': 'button'
+              },
+              onclick: (event) => {
+                const input = document.querySelector('#ipfs-dag-query')
+                actions.resolveIpldPath(input.value)
+              },
+            }, `Perform Query`),
+
+            // dag result
+            h('input#ipfs-dag-result', {
+              type: 'text',
+              disabled: true,
+            }),
+
+          ]),
+
+          h('#token-container.panel', [
+
+            //
+            // token balance
+            //
+
+            h('h2.space-top', 'Gnosis Token balance'),
+
+            // token holder address
+            h('input#token-query', {
+              'attributes': {
+                'type': 'text',
+                'placeholder': 'eth-ipfs pseudo path',
+                'value': state.tokenHolder,
+              },
+              oninput: (event) => actions.setTokenHolder(event.target.value),
+            }),
+
+            // initiate lookup
+            h('button', {
+              'attributes': {
+                'disabled': state.bestBlock ? undefined : true,
+                'type': 'button'
+              },
+              onclick: actions.lookupTokenBalance,
+            }, `Lookup Gnosis Balance`),
+
+            // cid path
+            h('input#token-result', {
+              type: 'text',
+              disabled: true,
+            }),
+
           ]),
 
           // peer status
