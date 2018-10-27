@@ -4,6 +4,8 @@ const ObsStore = require('obs-store')
 const vdom = require('./vdom')
 const render = require('./view.js')
 
+const ethUtils = require('ethereumjs-util')
+
 const PeerId = require('peer-id')
 const PeerInfo = require('peer-info')
 const multiaddr = require('multiaddr')
@@ -16,6 +18,7 @@ const store = new ObsStore({
   blocks: [],
   bestBlock: null,
   account: '0x52bc44d5378309ee2abf1539bf71de1b7d7be3b5',
+  contract: '0x6810e776880c02933d47db1b9fc05908e5386b96',
   accountBalance: '',
   tokenHolder: '0x1d805bc00b8fa3c96ae6c8fa97b2fd24b19a9801',
   isRpcSyncing: false
@@ -25,7 +28,19 @@ run()
 async function run () {
   try {
     const { kitsunet, providerTools } = await kitsunetFactory({
-      options: { sliceDepth: 10 },
+      options: {
+        sliceDepth: 10,
+        rpcUrl: 'http://localhost:8546',
+        ethAddrs: [
+          '0x52bc44d5378309ee2abf1539bf71de1b7d7be3b5',
+          '0x6810e776880c02933d47db1b9fc05908e5386b96',
+          '0x1d805bc00b8fa3c96ae6c8fa97b2fd24b19a9801'
+        ],
+        libp2pBootstrap: [
+          '/ip4/127.0.0.1/tcp/33001/ws/ipfs/QmUA1Ghihi5u3gDwEDxhbu49jU42QPbvHttZFwB6b4K5oC',
+          '/ip4/127.0.0.1/tcp/33003/ws/ipfs/QmZMmjMMP9VUyBkA6zFdEGmuFRdwjsiHZ3KtxMp89i7Xwv'
+        ]
+      },
       addrs: []
     })
 
@@ -72,6 +87,7 @@ const actions = global.actions = {
   lookupAccountBalance: async (account) => {
     const resultDisplay = document.querySelector('#ipfs-dag-result')
 
+    resultDisplay.value = ''
     const balance = await global.tools.eth.getBalance(account)
     console.log('balance:', balance)
     resultDisplay.value = balance
@@ -102,14 +118,20 @@ const actions = global.actions = {
       'payable': false,
       'type': 'function'
     }]
-    const token = global.tools.eth.contract(tokenABI).at('0x6810e776880c02933d47db1b9fc05908e5386b96')
-    const { tokenHolder } = store.getState()
-    const returnValues = await token.balanceOf(tokenHolder)
-    // parse return values
-    const balance = parseInt(returnValues[0].toString(16), 16) / 1e18
 
-    console.log('balance:', balance)
-    resultDisplay.value = balance
+    try {
+      const token = global.tools.eth.contract(tokenABI).at('0x6810e776880c02933d47db1b9fc05908e5386b96')
+      const { tokenHolder } = store.getState()
+      const returnValues = await token.balanceOf(tokenHolder)
+      // parse return values
+      const balance = parseInt(returnValues[0].toString(16), 16) / 1e18
+
+      console.log('balance:', balance)
+      resultDisplay.value = balance
+    } catch (err) {
+      onError(err)
+      console.error(err)
+    }
   },
   connectToPeer: async (event) => {
     const element = event.target

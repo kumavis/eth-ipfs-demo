@@ -7,6 +7,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "ethereumjs-util": "^6.0.0",
     "kitsunet": "github:dryajov/kitsunet-js.git#master",
     "multiaddr": "^5.0.0",
     "obs-store": "^2.3.2",
