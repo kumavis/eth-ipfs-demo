@@ -4,8 +4,6 @@ const ObsStore = require('obs-store')
 const vdom = require('./vdom')
 const render = require('./view.js')
 
-const ethUtils = require('ethereumjs-util')
-
 const PeerId = require('peer-id')
 const PeerInfo = require('peer-info')
 const multiaddr = require('multiaddr')
@@ -16,10 +14,12 @@ const store = new ObsStore({
   peerInfo: {},
   peers: [],
   blocks: [],
+  slices: new Set(),
   bestBlock: null,
   account: '0x52bc44d5378309ee2abf1539bf71de1b7d7be3b5',
   contract: '0x6810e776880c02933d47db1b9fc05908e5386b96',
   accountBalance: '',
+  tokenBalance: '',
   tokenHolder: '0x1d805bc00b8fa3c96ae6c8fa97b2fd24b19a9801',
   isRpcSyncing: false
 })
@@ -54,13 +54,17 @@ async function run () {
     })
 
     store.updateState({ peerInfo: global.kitsunet.peerInfo })
-
     global.tools.blockTracker.on('latest', actions.setBestBlock)
+    global.tools.sliceTracker.on('latest', (slice) => {
+      const { slices } = store.getState()
+      slices.add(slice.sliceId)
+      store.updateState({ slices })
+    })
 
     global.kitsunet.kitsunetPeer.on('kitsunet:connect', updatePeerList)
     global.kitsunet.kitsunetPeer.on('kitsunet:disconnect', updatePeerList)
   } catch (error) {
-    console.lerror(error)
+    console.error(error)
     onError(error)
   }
 }
@@ -85,7 +89,7 @@ const actions = global.actions = {
     store.updateState({ bestBlock })
   },
   lookupAccountBalance: async (account) => {
-    const resultDisplay = document.querySelector('#ipfs-dag-result')
+    const resultDisplay = document.querySelector('#kitsunet-balance-result')
 
     resultDisplay.value = ''
     const balance = await global.tools.eth.getBalance(account)
@@ -159,21 +163,6 @@ const actions = global.actions = {
     }
   },
   disconnectFromPeer: async (event) => {
-    // const element = event.target
-    // const address = element.getAttribute('data-address')
-    // const peers = await ipfs.swarm.peers()
-    // const peer = peers.find((peer) => peer.addr.toString() === address)
-    // if (!peer) return
-    // const peerInfo = peer.peer
-    // element.disabled = true
-    // peer.isDisconnecting = true
-    // ipfs.swarm.disconnect(peerInfo, (err) => {
-    //   element.disabled = false
-    //   if (err) {
-    //     return onError(err)
-    //   }
-    //   updatePeerList()
-    // })
   }
 }
 

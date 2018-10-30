@@ -2,7 +2,7 @@ body {
   height: 100vh;
   font-family: sans-serif;
   color: white;
-  background: #041727;
+  background: #54A1D5;
   pointer-events: auto;
 }
 
@@ -16,7 +16,9 @@ body {
 }
 
 .panel {
-  background-color: rgb(6, 40, 60);
+  font-family: monospace;
+  padding: 15px;
+  background-color: #282a2b;
   margin-bottom: 20px;
   overflow: hidden;
 }
@@ -101,13 +103,15 @@ ul li {
 }
 
 button {
-  background-color: rgba(0,0,0,0.2);
+  background-color: #00000033;
   color: #6acad1;
   border: 2px solid #6acad1;
   font-size: 15px;
   padding: 10px 25px 10px 25px;
   border-radius: 2px;
   margin: 5px;
+  margin-top: 15px;
+  font-family: monospace;
 }
 
 button:hover {
@@ -227,7 +231,7 @@ button:focus, input:focus {
 
 #block-container {
   padding-top: 10px;
-  margin: 1%;
+  /* margin: 1%; */
   height: 200px;
   overflow-y: scroll;
   font-family: monospace;

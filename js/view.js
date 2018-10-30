@@ -10,13 +10,13 @@ function render (state, actions) {
       h('div.header', [
         h('a', {
           'attributes': {
-            'href': 'https://ipfs.io',
+            'href': 'https://musteka.la',
             'target': '_blank'
           }
         }, [
           h('img#logo', {
             'attributes': {
-              'src': 'ipfs-logo.svg',
+              'src': 'mustekala.svg',
               'height': '32'
             },
             'id': {
@@ -28,11 +28,11 @@ function render (state, actions) {
       ]),
 
       h('div.wrapper', [
-        h('div#ipfs.ipfs', [
+        h('div#kitsunet.kitsunet', [
 
           // block bridging
           h('#bridge-control.panel', [
-            h('h2', 'Eth-IPFS bridge via RPC'),
+            h('h2', 'Kitsunet - Ethereum on libp2p'),
 
             h('div', 'best block:'),
             state.bestBlock ? renderBlock(state.bestBlock) : h('div', '(none)'),
@@ -45,19 +45,20 @@ function render (state, actions) {
               onclick: actions.startTracker
             }, `Start`),
             `
-              `,
-            h('button#stop', {
-              'attributes': {
-                'disabled': state.isRpcSyncing ? undefined : true,
-                'type': 'button'
-              },
-              onclick: actions.stopTracker
-            }, `Stop`)
+              `
+            // ,
+            // h('button#stop', {
+            //   'attributes': {
+            //     'disabled': state.isRpcSyncing ? undefined : true,
+            //     'type': 'button'
+            //   },
+            //   onclick: actions.stopTracker
+            // }, `Stop`)
           ]),
 
           // block inventory
           h('#block-container.panel', [
-            state.blocks.slice().reverse().map(renderBlock)
+            Array.from(state.slices.values()).map((s) => [s, h('br')])
           ]),
 
           // data lookups
@@ -67,10 +68,10 @@ function render (state, actions) {
             // general query
             //
 
-            h('h2.space-top', 'Query lookup'),
+            h('h2.space-top', 'Account Balance Lookup'),
 
-            // dag path
-            h('input#ipfs-dag-query', {
+            // balance
+            h('input#kitsunet-balance', {
               'attributes': {
                 'type': 'text',
                 'placeholder': 'balance lookup',
@@ -84,13 +85,13 @@ function render (state, actions) {
                 'type': 'button'
               },
               onclick: (event) => {
-                const input = document.querySelector('#ipfs-dag-query')
+                const input = document.querySelector('#kitsunet-balance')
                 actions.lookupAccountBalance(input.value)
               }
-            }, `Account's balance lookup`),
+            }, `Account's balance`),
 
-            // dag result
-            h('input#ipfs-dag-result', {
+            // balance result
+            h('input#kitsunet-balance-result', {
               type: 'text',
               disabled: true
             })
@@ -109,7 +110,7 @@ function render (state, actions) {
             h('input#token-query', {
               'attributes': {
                 'type': 'text',
-                'placeholder': 'eth-ipfs pseudo path',
+                'placeholder': 'eth-kitsunet pseudo path',
                 'value': state.tokenHolder
               },
               oninput: (event) => actions.setTokenHolder(event.target.value)
@@ -203,5 +204,5 @@ function render (state, actions) {
 
 function renderBlock (block) {
   const number = parseInt(block.number)
-  return h('div', `block: #${number}  ${block.cid}`)
+  return h('div', `block: #${number}, stateRoot: ${block.stateRoot}`)
 }
