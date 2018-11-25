@@ -2,7 +2,7 @@
   "name": "eth-kitsunet-demo",
   "version": "1.0.0",
   "scripts": {
-    "start": "npx beefy js/app.js:bundle.js --live --open",
+    "start": "npx beefy js/app.js:bundle.js --open",
     "build": "npx browserify js/app.js -o bundle.js"
   },
   "license": "MIT",

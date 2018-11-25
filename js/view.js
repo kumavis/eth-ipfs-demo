@@ -142,7 +142,11 @@ function render (state, actions) {
               h('h3', `Addresses`),
               h('ul.addresses-container', [(
                 state.peerInfo.multiaddrs && state.peerInfo.multiaddrs.size > 0
-                  ? state.peerInfo.multiaddrs.toArray().map((address) => h('li', [h('span.address', address)]))
+                  ? state.peerInfo.multiaddrs.toArray().map((address) => {
+                    return h('li', [
+                      h('span.address', address.toString())
+                    ])
+                  })
                   : h('li', `Not yet online`)
               )])
             ])
